@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "tsx watch server/index.ts",
-    "build": "tsc -p tsconfig.server.json && vite build",
-    "start": "node dist/server/index.js",
+    "build": "vite build",
+    "start": "node --loader tsx/esm server/index.ts",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
