@@ -1,5 +1,5 @@
 import { SignJWT, jwtVerify } from "jose";
-import bcrypt from "bcryptjs";
+import * as bcrypt from "bcryptjs";
 
 const getSecret = () => {
   const s = process.env.SESSION_SECRET ?? "dev_secret_agrivisit_2024";

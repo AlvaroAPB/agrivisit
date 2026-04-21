@@ -4,7 +4,9 @@
     "module": "CommonJS",
     "moduleResolution": "node",
     "outDir": "./dist/server",
-    "jsx": "react"
+    "jsx": "react",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
   },
   "include": ["server", "drizzle"]
 }

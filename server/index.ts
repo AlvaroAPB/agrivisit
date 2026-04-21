@@ -1,5 +1,5 @@
 import "dotenv/config";
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
 import { createServer } from "http";
 import path from "path";
 import { parse as parseCookies } from "cookie";
@@ -14,23 +14,19 @@ const server = createServer(app);
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
-// Cookie parsing sin cookie-parser
-app.use((req, _res, next) => {
-  req.cookies = parseCookies(req.headers.cookie || "");
+app.use((req: Request, _res: Response, next: NextFunction) => {
+  (req as any).cookies = parseCookies(req.headers.cookie || "");
   next();
 });
 
-// Rutas de autenticación
 registerAuthRoutes(app);
 
-// API tRPC
 app.use("/api/trpc", createExpressMiddleware({ router: appRouter, createContext }));
 
-// Frontend estático en producción
 if (process.env.NODE_ENV === "production") {
   const distPath = path.join(process.cwd(), "dist/client");
   app.use(express.static(distPath));
-  app.get("*", (_req, res) => {
+  app.get("*", (_req: Request, res: Response) => {
     res.sendFile(path.join(distPath, "index.html"));
   });
 }
