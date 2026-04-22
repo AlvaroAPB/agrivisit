@@ -2,6 +2,7 @@ import { useState } from "react";
 import Sidebar from "../components/Sidebar";
 import { trpc } from "../lib/trpc";
 import { MapPin, Plus, ChevronRight, ChevronLeft, Save, Loader2, Trash2 } from "lucide-react";
+import MapaSatelite from "../components/MapaSatelite";
 import { Link } from "wouter";
 
 const CULTIVOS_HUESO = ["Melocotón","Nectarina","Albaricoque","Paraguayo","Pluot","Ciruela","Cereza","Otro hueso"];
@@ -22,21 +23,7 @@ const PENDIENTES = ["Llano (0-2%)","Suave (2-5%)","Moderada (5-15%)","Fuerte (>1
 const DESTINOS = ["Exportación Europa","Exportación Asia","Mercado nacional","Industria","Mixto"];
 const SECCIONES = ["Identificación","Cultivo","Suelo y agua","Producción","Gestión"];
 
-function MapaFinca({ lat, lng }: { lat: string; lng: string }) {
-  const latN = parseFloat(lat), lngN = parseFloat(lng);
-  if (!lat || !lng || isNaN(latN) || isNaN(lngN)) return null;
-  return (
-    <div className="col-span-2 mt-2 rounded-xl overflow-hidden border border-gray-200">
-      <iframe
-        src={`https://www.openstreetmap.org/export/embed.html?bbox=${lngN-0.02},${latN-0.02},${lngN+0.02},${latN+0.02}&layer=mapnik&marker=${latN},${lngN}`}
-        width="100%" height="220" style={{border:0}} title="Ubicación" />
-      <div className="bg-gray-50 border-t border-gray-100 px-3 py-1.5 flex justify-between">
-        <span className="text-xs text-gray-400">{latN.toFixed(5)}, {lngN.toFixed(5)}</span>
-        <a href={`https://www.openstreetmap.org/?mlat=${latN}&mlon=${lngN}#map=14/${latN}/${lngN}`} target="_blank" rel="noreferrer" className="text-xs text-green-600 hover:underline">Ver mapa completo →</a>
-      </div>
-    </div>
-  );
-}
+
 
 function F({ label, req, children }: { label: string; req?: boolean; children: React.ReactNode }) {
   return (
@@ -105,7 +92,7 @@ function Modal({ onClose, onSaved }: { onClose:()=>void; onSaved:()=>void }) {
             <F label="Superficie total (ha)" req><input value={f.superficie} onChange={set("superficie")} className={ic} placeholder="Ej: 45.5" type="number" step="0.1"/></F>
             <F label="Encargado de campo"><input value={f.encargado} onChange={set("encargado")} className={ic} placeholder="Nombre"/></F>
             <F label="Teléfono encargado"><input value={f.telEncargado} onChange={set("telEncargado")} className={ic} placeholder="+34 600 000 000"/></F>
-            <MapaFinca lat={f.lat} lng={f.lng}/>
+            <MapaSatelite lat={f.lat} lng={f.lng} onSelect={(la,lo)=>setF(p=>({...p,lat:String(la),lng:String(lo)}))} />
           </div>}
 
           {step===1 && <div className="grid grid-cols-2 gap-4">
@@ -211,9 +198,11 @@ export function Farms() {
                   </Link>
                 </div>
                 {ex.lat && ex.lng && !isNaN(parseFloat(ex.lat)) && (
-                  <div className="border-t border-gray-100" style={{height:110}}>
-                    <iframe src={`https://www.openstreetmap.org/export/embed.html?bbox=${parseFloat(ex.lng)-0.01},${parseFloat(ex.lat)-0.01},${parseFloat(ex.lng)+0.01},${parseFloat(ex.lat)+0.01}&layer=mapnik&marker=${ex.lat},${ex.lng}`} width="100%" height="110" style={{border:0,pointerEvents:"none"}} title="mapa"/>
-                  </div>
+                  <a href={`https://www.google.com/maps/@${ex.lat},${ex.lng},200m/data=!3m1!1e3`} target="_blank" rel="noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 border-t border-gray-100 text-xs text-gray-500 hover:bg-gray-50 transition-colors">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="#16a34a"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                    {parseFloat(ex.lat).toFixed(4)}, {parseFloat(ex.lng).toFixed(4)} — Ver satélite
+                  </a>
                 )}
               </div>
             );
