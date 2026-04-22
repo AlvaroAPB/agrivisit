@@ -37,7 +37,7 @@ export default function Login() {
             <Leaf className="w-8 h-8 text-green-300" />
           </div>
           <h1 className="text-3xl font-bold text-white">AgriVisit</h1>
-          <p className="text-green-300 mt-1">Sistema profesional de revisión de fincas</p>
+          <p className="text-green-300 mt-1">Sistema Profesional de Revisión de Fincas</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-2xl p-8">
