@@ -41,17 +41,10 @@ export default function Login() {
         </div>
 
         <div className="bg-white rounded-2xl shadow-2xl p-8">
-          <div className="flex bg-gray-100 rounded-xl p-1 mb-6">
-            {(["login", "register"] as Mode[]).map(m => (
-              <button key={m} onClick={() => { setMode(m); setError(""); }}
-                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${mode === m ? "bg-white shadow text-gray-900" : "text-gray-500"}`}>
-                {m === "login" ? "Iniciar sesión" : "Crear cuenta"}
-              </button>
-            ))}
-          </div>
+          <h2 className="text-lg font-semibold text-gray-900 mb-6">Iniciar sesión</h2>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {mode === "register" && (
+            {false && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nombre completo</label>
                 <input type="text" value={name} onChange={e => setName(e.target.value)} required

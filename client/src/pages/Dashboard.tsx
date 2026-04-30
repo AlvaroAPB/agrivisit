@@ -1,8 +1,97 @@
 import Sidebar from "../components/Sidebar";
 import { trpc } from "../lib/trpc";
-import { MapPin, Sprout, ClipboardList, CheckSquare, Download } from "lucide-react";
+import { MapPin, Sprout, ClipboardList, CheckSquare, Download, Snowflake, ThermometerSun, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { Link } from "wouter";
+
+function ComparativaClimatica() {
+  // Por defecto: período de acumulación de frío de la temporada actual
+  const today = new Date();
+  const month = today.getMonth();
+  const year = today.getFullYear();
+  const startYear = month >= 9 ? year : year - 1;
+  const startDate = `${startYear}-10-01`;
+  const endDate = `${startYear + 1}-03-31`;
+
+  const { data, isLoading } = trpc.climate.compareFarms.useQuery(
+    { startDate, endDate },
+    { staleTime: 30 * 60 * 1000, refetchOnWindowFocus: false }
+  );
+
+  if (isLoading) return (
+    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 mb-6">
+      <div className="flex items-center gap-2 text-gray-500">
+        <Loader2 className="w-4 h-4 animate-spin text-green-600" />
+        <p className="text-sm">Cargando comparativa climática...</p>
+      </div>
+    </div>
+  );
+
+  if (!data || data.length === 0) return null;
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-100 shadow-sm mb-6">
+      <div className="p-5 border-b border-gray-100">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+              <Snowflake className="w-4 h-4 text-blue-600" /> Comparativa climática entre fincas
+            </h2>
+            <p className="text-xs text-gray-500 mt-0.5">Período: {format(new Date(startDate), "MMM yyyy", { locale: es })} – {format(new Date(endDate), "MMM yyyy", { locale: es })}</p>
+          </div>
+          <span className="text-xs text-gray-400">Datos: Open-Meteo</span>
+        </div>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-gray-100 bg-gray-50">
+              <th className="text-left text-xs font-medium text-gray-500 uppercase px-4 py-3">Finca</th>
+              <th className="text-left text-xs font-medium text-gray-500 uppercase px-4 py-3">Cultivo</th>
+              <th className="text-right text-xs font-medium text-gray-500 uppercase px-4 py-3">Chill Portions</th>
+              <th className="text-right text-xs font-medium text-gray-500 uppercase px-4 py-3">vs requerido</th>
+              <th className="text-right text-xs font-medium text-gray-500 uppercase px-4 py-3">T media</th>
+              <th className="text-right text-xs font-medium text-gray-500 uppercase px-4 py-3">Precipitación</th>
+              <th className="text-right text-xs font-medium text-gray-500 uppercase px-4 py-3">Heladas</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((d: any) => {
+              const pct = d.requerimientoFrio ? Math.round((d.chillPortions / d.requerimientoFrio) * 100) : null;
+              const status = pct === null ? "gray" : pct >= 100 ? "green" : pct >= 70 ? "amber" : "red";
+              const colors = { green: "text-green-700 bg-green-50", amber: "text-amber-700 bg-amber-50", red: "text-red-700 bg-red-50", gray: "text-gray-500 bg-gray-50" };
+              return (
+                <tr key={d.farmId} className="border-b border-gray-50 hover:bg-gray-50">
+                  <td className="px-4 py-3">
+                    <Link href={`/fincas/${d.farmId}`}>
+                      <a className="font-medium text-gray-900 hover:text-green-700">{d.farmName}</a>
+                    </Link>
+                    <p className="text-xs text-gray-500">{d.location}</p>
+                  </td>
+                  <td className="px-4 py-3">
+                    {d.especie && <span className="text-xs px-2 py-0.5 bg-green-50 text-green-700 rounded-full">{d.especie}</span>}
+                    {d.variedad && <p className="text-xs text-gray-500 mt-0.5">{d.variedad}</p>}
+                  </td>
+                  <td className="px-4 py-3 text-right font-semibold">{d.chillPortions.toFixed(1)}</td>
+                  <td className="px-4 py-3 text-right">
+                    {pct !== null
+                      ? <span className={`text-xs px-2 py-1 rounded-full font-medium ${colors[status]}`}>{pct}% de {d.requerimientoFrio} CP</span>
+                      : <span className="text-xs text-gray-400">Sin objetivo</span>
+                    }
+                  </td>
+                  <td className="px-4 py-3 text-right">{d.tmean.toFixed(1)}°C</td>
+                  <td className="px-4 py-3 text-right">{d.totalPrecipitation.toFixed(0)}mm</td>
+                  <td className="px-4 py-3 text-right">{d.frostDays > 0 ? <span className="text-blue-600 font-medium">{d.frostDays} días</span> : <span className="text-gray-400">—</span>}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
 
 function StatCard({ icon: Icon, label, value, color }: { icon: any; label: string; value: number; color: string }) {
   return (
@@ -110,6 +199,8 @@ export default function Dashboard() {
           <StatCard icon={ClipboardList} label="Revisiones totales" value={reviews.length} color="bg-teal-600" />
           <StatCard icon={CheckSquare} label="Revisiones este mes" value={reviews.filter(r => new Date(r.createdAt).getMonth() === new Date().getMonth()).length} color="bg-cyan-600" />
         </div>
+
+        <ComparativaClimatica />
 
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
           <div className="p-5 border-b border-gray-100">

@@ -3,7 +3,7 @@ import postgres from "postgres";
 import { eq, desc } from "drizzle-orm";
 import * as schema from "../drizzle/schema";
 
-const { users, farms, crops, reviews, photos, activities, tasks, cropAttachments } = schema;
+const { users, farms, crops, reviews, photos, activities, tasks, cropAttachments, parcels, visitReports, visitEntries, visitPhotos } = schema;
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -237,4 +237,228 @@ export async function deleteCropAttachment(id: number) {
   const db = getDb();
   await db.delete(cropAttachments).where(eq(cropAttachments.id, id));
   return { success: true };
+}
+
+// ===== CAMPAIGNS =====
+const { campaigns } = schema;
+
+export async function createCampaign(data: typeof campaigns.$inferInsert) {
+  const db = getDb();
+  const result = await db.insert(campaigns).values(data).returning();
+  return result[0];
+}
+
+export async function getCampaignsByFarmId(farmId: number) {
+  const db = getDb();
+  return db.select().from(campaigns).where(eq(campaigns.farmId, farmId)).orderBy(desc(campaigns.year));
+}
+
+export async function getAllCampaigns(ownerId: number) {
+  const db = getDb();
+  // Hacer JOIN con farms para filtrar por owner
+  const allFarms = await db.select().from(schema.farms).where(eq(schema.farms.ownerId, ownerId));
+  const farmIds = allFarms.map(f => f.id);
+  if (farmIds.length === 0) return [];
+  const all = await db.select().from(campaigns);
+  return all.filter(c => farmIds.includes(c.farmId)).sort((a, b) => b.year - a.year);
+}
+
+export async function getCampaignById(id: number) {
+  const db = getDb();
+  const result = await db.select().from(campaigns).where(eq(campaigns.id, id)).limit(1);
+  return result[0] ?? null;
+}
+
+export async function updateCampaign(id: number, data: Partial<typeof campaigns.$inferInsert>) {
+  const db = getDb();
+  const result = await db.update(campaigns).set({ ...data, updatedAt: new Date() }).where(eq(campaigns.id, id)).returning();
+  return result[0];
+}
+
+export async function deleteCampaign(id: number) {
+  const db = getDb();
+  await db.delete(campaigns).where(eq(campaigns.id, id));
+  return { success: true };
+}
+
+export async function deleteAllCampaignsByFarm(farmId: number) {
+  const db = getDb();
+  await db.delete(campaigns).where(eq(campaigns.farmId, farmId));
+  return { success: true };
+}
+
+// ===== PARCELS =====
+export async function createParcel(data: typeof parcels.$inferInsert) {
+  const db = getDb();
+  const result = await db.insert(parcels).values(data).returning();
+  return result[0];
+}
+
+export async function getParcelsByFarmId(farmId: number) {
+  const db = getDb();
+  return db.select().from(parcels).where(eq(parcels.farmId, farmId)).orderBy(parcels.name);
+}
+
+export async function getParcelById(id: number) {
+  const db = getDb();
+  const result = await db.select().from(parcels).where(eq(parcels.id, id)).limit(1);
+  return result[0] ?? null;
+}
+
+export async function updateParcel(id: number, data: Partial<typeof parcels.$inferInsert>) {
+  const db = getDb();
+  const result = await db.update(parcels).set({ ...data, updatedAt: new Date() }).where(eq(parcels.id, id)).returning();
+  return result[0];
+}
+
+export async function deleteParcel(id: number) {
+  const db = getDb();
+  await db.delete(parcels).where(eq(parcels.id, id));
+  return { success: true };
+}
+
+// Listar todas las parcelas del owner (para dashboard global con filtros)
+export async function getAllParcelsByOwner(ownerId: number) {
+  const db = getDb();
+  return db
+    .select({
+      parcel: parcels,
+      farm: farms,
+    })
+    .from(parcels)
+    .innerJoin(farms, eq(parcels.farmId, farms.id))
+    .where(eq(farms.ownerId, ownerId))
+    .orderBy(farms.name, parcels.name);
+}
+
+// ===== VISIT REPORTS =====
+export async function createVisitReport(data: typeof visitReports.$inferInsert) {
+  const db = getDb();
+  const result = await db.insert(visitReports).values(data).returning();
+  return result[0];
+}
+
+export async function getVisitReportsByOwner(technicianId: number) {
+  const db = getDb();
+  return db.select().from(visitReports)
+    .where(eq(visitReports.technicianId, technicianId))
+    .orderBy(visitReports.dateStart);
+}
+
+export async function getVisitReportById(id: number) {
+  const db = getDb();
+  const result = await db.select().from(visitReports).where(eq(visitReports.id, id)).limit(1);
+  return result[0] ?? null;
+}
+
+export async function updateVisitReport(id: number, data: Partial<typeof visitReports.$inferInsert>) {
+  const db = getDb();
+  const result = await db.update(visitReports).set({ ...data, updatedAt: new Date() }).where(eq(visitReports.id, id)).returning();
+  return result[0];
+}
+
+export async function deleteVisitReport(id: number) {
+  const db = getDb();
+  await db.delete(visitReports).where(eq(visitReports.id, id));
+  return { success: true };
+}
+
+// ===== VISIT ENTRIES =====
+export async function createVisitEntry(data: typeof visitEntries.$inferInsert) {
+  const db = getDb();
+  const result = await db.insert(visitEntries).values(data).returning();
+  return result[0];
+}
+
+export async function getVisitEntriesByReport(reportId: number) {
+  const db = getDb();
+  return db.select({
+    entry: visitEntries,
+    farm: farms,
+    parcel: parcels,
+  })
+  .from(visitEntries)
+  .innerJoin(farms, eq(visitEntries.farmId, farms.id))
+  .leftJoin(parcels, eq(visitEntries.parcelId, parcels.id))
+  .where(eq(visitEntries.reportId, reportId))
+  .orderBy(visitEntries.visitDate, farms.name);
+}
+
+export async function updateVisitEntry(id: number, data: Partial<typeof visitEntries.$inferInsert>) {
+  const db = getDb();
+  const result = await db.update(visitEntries).set({ ...data, updatedAt: new Date() }).where(eq(visitEntries.id, id)).returning();
+  return result[0];
+}
+
+export async function deleteVisitEntry(id: number) {
+  const db = getDb();
+  await db.delete(visitEntries).where(eq(visitEntries.id, id));
+  return { success: true };
+}
+
+// ===== VISIT PHOTOS =====
+export async function createVisitPhoto(data: typeof visitPhotos.$inferInsert) {
+  const db = getDb();
+  const result = await db.insert(visitPhotos).values(data).returning();
+  return result[0];
+}
+
+export async function getVisitPhotosByEntry(entryId: number) {
+  const db = getDb();
+  return db.select().from(visitPhotos).where(eq(visitPhotos.entryId, entryId)).orderBy(visitPhotos.createdAt);
+}
+
+export async function deleteVisitPhoto(id: number) {
+  const db = getDb();
+  const result = await db.select().from(visitPhotos).where(eq(visitPhotos.id, id)).limit(1);
+  await db.delete(visitPhotos).where(eq(visitPhotos.id, id));
+  return result[0];
+}
+
+export async function getVisitEntriesHistorico(farmId: number, parcelId?: number) {
+  const db = getDb();
+  const conditions = parcelId
+    ? and(eq(visitEntries.farmId, farmId), eq(visitEntries.parcelId, parcelId))
+    : eq(visitEntries.farmId, farmId);
+  return db.select({
+    id: visitEntries.id,
+    visitDate: visitEntries.visitDate,
+    estadoFenologico: visitEntries.estadoFenologico,
+    vigorVegetativo: visitEntries.vigorVegetativo,
+    colorFoliaje: visitEntries.colorFoliaje,
+    estadoSanitario: visitEntries.estadoSanitario,
+    estadoRiego: visitEntries.estadoRiego,
+    brixGrados: visitEntries.brixGrados,
+    calibreMm: visitEntries.calibreMm,
+    firmezaKg: visitEntries.firmezaKg,
+    parcelId: visitEntries.parcelId,
+  })
+  .from(visitEntries)
+  .where(conditions)
+  .orderBy(visitEntries.visitDate);
+}
+
+export async function getAllTasksByOwner(ownerId: number) {
+  const db = getDb();
+  return db.select({ task: tasks, farm: farms })
+    .from(tasks)
+    .innerJoin(farms, eq(tasks.farmId, farms.id))
+    .where(eq(farms.ownerId, ownerId))
+    .orderBy(tasks.dueDate);
+}
+
+export async function getAllVisitEntriesByOwner(ownerId: number) {
+  const db = getDb();
+  return db.select({ entry: visitEntries, farm: farms, parcel: parcels })
+    .from(visitEntries)
+    .innerJoin(farms, eq(visitEntries.farmId, farms.id))
+    .leftJoin(parcels, eq(visitEntries.parcelId, parcels.id))
+    .where(eq(farms.ownerId, ownerId))
+    .orderBy(visitEntries.visitDate);
+}
+
+export async function updateVisitPhotoCaption(id: number, caption: string) {
+  const db = getDb();
+  const result = await db.update(visitPhotos).set({ caption }).where(eq(visitPhotos.id, id)).returning();
+  return result[0];
 }

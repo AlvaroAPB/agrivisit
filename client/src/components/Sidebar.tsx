@@ -1,13 +1,19 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, MapPin, Sprout, ClipboardList, CheckSquare, LogOut, Leaf } from "lucide-react";
+import { Leaf, LogOut } from "lucide-react";
 import { trpc } from "../lib/trpc";
 
 const nav = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/fincas", icon: MapPin, label: "Fincas" },
-  { href: "/cultivos", icon: Sprout, label: "Cultivos" },
-  { href: "/revisiones", icon: ClipboardList, label: "Revisiones" },
-  { href: "/tareas", icon: CheckSquare, label: "Tareas" },
+  { section: null, href: "/dashboard", label: "Dashboard" },
+  { section: "Gestión", href: "/inventario", label: "Inventario global" },
+  { section: null, href: "/fincas", label: "Fincas" },
+  { section: null, href: "/cultivos", label: "Cultivos y variedades" },
+  { section: "Técnico", href: "/campanyas", label: "Campañas" },
+  { section: null, href: "/comparativa", label: "Clima comparativo" },
+  { section: null, href: "/fertirriego", label: "Fertirrigación" },
+  { section: null, href: "/prediccion", label: "Predicción de cosecha" },
+  { section: "Campo", href: "/visitas", label: "Visitas de campo" },
+  { section: null, href: "/revisiones", label: "Revisiones" },
+  { section: null, href: "/tareas", label: "Tareas" },
 ];
 
 export default function Sidebar() {
@@ -17,6 +23,8 @@ export default function Sidebar() {
     onSuccess: () => { window.location.href = "/"; }
   });
 
+  let lastSection: string | null = undefined as any;
+
   return (
     <aside className="w-56 bg-green-900 text-white flex flex-col min-h-screen">
       <div className="p-5 border-b border-green-800">
@@ -25,24 +33,42 @@ export default function Sidebar() {
           <span className="font-bold text-lg">AgriVisit</span>
         </div>
       </div>
-      <nav className="flex-1 p-3 space-y-1">
-        {nav.map(({ href, icon: Icon, label }) => (
-          <Link key={href} href={href}>
-            <a className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${location === href ? "bg-green-700 text-white" : "text-green-200 hover:bg-green-800 hover:text-white"}`}>
-              <Icon className="w-4 h-4" />
-              {label}
-            </a>
-          </Link>
-        ))}
+      <nav className="flex-1 p-3 pt-2">
+        {nav.map(({ section, href, label }) => {
+          const isActive = location === href || location.startsWith(href + "/");
+          const showSection = section && section !== lastSection;
+          if (section) lastSection = section;
+
+          return (
+            <div key={href}>
+              {showSection && (
+                <p className="text-xs font-semibold text-green-500 uppercase tracking-wider px-3 pt-4 pb-1">
+                  {section}
+                </p>
+              )}
+              <Link href={href}>
+                <a className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors mb-0.5 ${
+                  isActive
+                    ? "bg-green-600 text-white shadow-inner"
+                    : "text-green-200 hover:bg-green-800 hover:text-white"
+                }`}>
+                  {label}
+                </a>
+              </Link>
+            </div>
+          );
+        })}
       </nav>
       <div className="p-3 border-t border-green-800">
         <div className="px-3 py-2 mb-2">
           <p className="text-sm font-medium text-white">{user?.name}</p>
           <p className="text-xs text-green-400">{user?.role}</p>
         </div>
-        <button onClick={() => logout.mutate()} className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-green-200 hover:bg-green-800 hover:text-white transition-colors w-full">
-          <LogOut className="w-4 h-4" />
-          Cerrar sesión
+        <button
+          onClick={() => logout.mutate()}
+          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-green-200 hover:bg-green-800 hover:text-white transition-colors w-full"
+        >
+          <LogOut className="w-4 h-4" /> Cerrar sesión
         </button>
       </div>
     </aside>

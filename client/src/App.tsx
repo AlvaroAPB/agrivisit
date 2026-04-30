@@ -8,6 +8,14 @@ import FarmDetail from "./pages/FarmDetail";
 import Crops from "./pages/Crops";
 import Reviews from "./pages/Reviews";
 import Tasks from "./pages/Tasks";
+import Comparativa from "./pages/Comparativa";
+import Campaigns from "./pages/Campaigns";
+import ModelAnalysis from "./pages/ModelAnalysis";
+import Cultivos from "./pages/Cultivos";
+import Fertirrigation from "./pages/Fertirrigation";
+import Inventario from "./pages/Inventario";
+import Visitas from "./pages/Visitas";
+import Prediccion from "./pages/Prediccion";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -39,6 +47,33 @@ export default function App() {
           </Route>
           <Route path="/fincas/:id">
             <AuthGuard><FarmDetail /></AuthGuard>
+          </Route>
+          <Route path="/comparativa">
+            <AuthGuard><Comparativa /></AuthGuard>
+          </Route>
+          <Route path="/campanyas">
+            <AuthGuard><Campaigns /></AuthGuard>
+          </Route>
+          <Route path="/analisis">
+            <AuthGuard><ModelAnalysis /></AuthGuard>
+          </Route>
+          <Route path="/cultivos">
+            <AuthGuard><Cultivos /></AuthGuard>
+          </Route>
+          <Route path="/fertirriego">
+            <AuthGuard><Fertirrigation /></AuthGuard>
+          </Route>
+          <Route path="/inventario">
+            <AuthGuard><Inventario /></AuthGuard>
+          </Route>
+          <Route path="/visitas/:id">
+            <AuthGuard><Visitas /></AuthGuard>
+          </Route>
+          <Route path="/visitas">
+            <AuthGuard><Visitas /></AuthGuard>
+          </Route>
+          <Route path="/prediccion">
+            <AuthGuard><Prediccion /></AuthGuard>
           </Route>
           <Route path="/cultivos">
             <AuthGuard><Crops /></AuthGuard>

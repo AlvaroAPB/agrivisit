@@ -25,6 +25,8 @@ function clearSession(res: Response) {
 
 export function registerAuthRoutes(app: Express) {
   app.post("/api/auth/register", async (req: Request, res: Response) => {
+    // Registro público deshabilitado — solo el admin puede crear usuarios
+    return res.status(403).json({ error: "El registro público está deshabilitado." });
     const { name, email, password } = req.body;
     if (!name || !email || !password) { res.status(400).json({ error: "Todos los campos son obligatorios" }); return; }
     if (password.length < 6) { res.status(400).json({ error: "La contraseña debe tener al menos 6 caracteres" }); return; }
